@@ -37,7 +37,7 @@ if ($Apk) {
     & $gh release create "v$Version" TasasBCV.apk --title "v$Version" --notes $Notas
     @{ versionCode = $code; versionName = $Version; notes = $Notas
        apk = "https://github.com/$repo/releases/download/v$Version/TasasBCV.apk" } |
-        ConvertTo-Json | Set-Content docs\version.json -Encoding utf8
+        ConvertTo-Json | ForEach-Object { [IO.File]::WriteAllText("$PWD\docs\version.json", $_) } # UTF-8 sin BOM
     git add docs\version.json
     git commit -m "Aviso de v$Version"
     git push
