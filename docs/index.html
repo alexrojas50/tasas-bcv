@@ -1,0 +1,503 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<title>Tasas BCV</title>
+<script>try{const t=localStorage.getItem("theme");if(t)document.documentElement.dataset.theme=t}catch{}</script>
+<style>
+:root{--bg:#F5F6F8;--card:#FFFFFF;--text:#0E1116;--muted:#6B7280;--line:#E5E7EB;--accent:#0F9F6E;--accent-soft:rgba(15,159,110,.10);--up:#D9480F;--series:#0F9F6E;--on-accent:#FFFFFF;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0C0D10;--card:#16181D;--text:#F3F4F6;--muted:#8B919C;--line:#24272E;--accent:#34D399;--accent-soft:rgba(52,211,153,.12);--up:#FB923C;--series:#1FA876;--on-accent:#062A1D;color-scheme:dark}}
+:root[data-theme=dark]{--bg:#0C0D10;--card:#16181D;--text:#F3F4F6;--muted:#8B919C;--line:#24272E;--accent:#34D399;--accent-soft:rgba(52,211,153,.12);--up:#FB923C;--series:#1FA876;--on-accent:#062A1D;color-scheme:dark}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--text);transition:background .2s;font:16px/1.4 system-ui,Roboto,sans-serif;padding:28px 20px 40px;max-width:520px;margin:auto}
+[hidden]{display:none!important}
+header{display:flex;justify-content:space-between;align-items:center;position:relative}
+h1{font-size:26px;font-weight:700;letter-spacing:-.02em}
+#date{color:var(--muted);font-size:14px;margin-top:2px}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+.actions{display:flex;gap:8px}
+.icon-btn{width:44px;height:44px;border-radius:50%;background:var(--card);border:1px solid var(--line);display:grid;place-items:center}
+.icon-btn svg{width:20px;height:20px}
+#refresh.spin svg{animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#menu{position:absolute;right:0;top:52px;z-index:10;min-width:200px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:6px;box-shadow:0 12px 32px rgba(0,0,0,.18);transform-origin:top right;animation:pop .15s ease-out}
+@keyframes pop{from{opacity:0;transform:scale(.95)}}
+#menu button{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;border-radius:12px;text-align:left;font-weight:500}
+#menu button:hover,#menu button:focus-visible{background:var(--bg);outline:0}
+#menu button svg{width:20px;height:20px;color:var(--muted)}
+#menu button[data-view][aria-checked=true]{color:var(--accent)}
+#menu button[data-view][aria-checked=true] svg{color:var(--accent)}
+.menu-sep{height:1px;background:var(--line);margin:6px 8px}
+.switch{margin-left:auto;flex:none;width:36px;height:20px;border-radius:999px;background:var(--line);position:relative;transition:background .2s}
+.switch::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.3);transition:transform .2s}
+#theme-switch[aria-checked=true] .switch{background:var(--accent)}
+#theme-switch[aria-checked=true] .switch::after{transform:translateX(16px)}
+.rates{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:28px 0 32px}
+.rate{text-align:left;background:var(--card);border:1.5px solid var(--line);border-radius:20px;padding:16px;transition:border-color .2s,background .2s;cursor:pointer;outline:0}
+.rate[aria-pressed=true]{border-color:var(--accent);background:linear-gradient(var(--accent-soft),var(--accent-soft)),var(--card)}
+.rate .code{font-size:13px;font-weight:600;color:var(--muted);letter-spacing:.06em}
+.rate[aria-pressed=true] .code{color:var(--accent)}
+.rate .val{font-size:24px;font-weight:700;letter-spacing:-.02em;margin-top:6px;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rate input.val{width:100%;border:0;background:none;color:var(--text);outline:0;padding:0;font-family:inherit}
+.rate input.val::placeholder{color:var(--line)}
+.rate .unit{font-size:13px;color:var(--muted)}
+.rate .unit b{color:var(--up);font-weight:600}
+.arrow-up{color:var(--up)}.arrow-down{color:var(--accent)}
+h2{font-size:13px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px}
+.chips{display:flex;gap:8px;overflow-x:auto;margin-bottom:12px;scrollbar-width:none}
+.chips button{flex:1;min-width:48px;padding:9px 0;border-radius:999px;background:var(--card);border:1px solid var(--line);font-weight:600;font-size:14px;font-variant-numeric:tabular-nums}
+.chips button:active{border-color:var(--accent);color:var(--accent)}
+.calc{background:var(--card);border:1px solid var(--line);border-radius:24px;padding:6px}
+.field{display:flex;align-items:center;gap:12px;padding:16px 18px;border-radius:18px}
+.field:focus-within{background:var(--bg)}
+.field label{font-weight:600;min-width:40px;color:var(--muted)}
+.field input{flex:1;min-width:0;border:0;background:none;color:var(--text);font:600 28px system-ui,Roboto,sans-serif;text-align:right;outline:0;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.field input::placeholder{color:var(--line)}
+.sep{height:1px;background:var(--line);margin:0 18px}
+#copy{width:100%;margin-top:12px;padding:16px;border-radius:18px;background:var(--accent);color:var(--on-accent);font-weight:600;display:flex;gap:8px;justify-content:center;align-items:center;transition:opacity .2s}
+#copy:disabled{opacity:.35;cursor:default}
+#copy svg{width:18px;height:18px}
+#msg{color:var(--muted);font-size:13px;text-align:center;margin-top:20px;min-height:1em}
+/* Gráfico e historial */
+.view-title{font-size:20px;font-weight:700;letter-spacing:-.01em;margin:28px 0 14px}
+.seg{display:flex;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:4px;gap:4px;margin-bottom:12px}
+.seg button{flex:1;padding:8px 0;border-radius:10px;font-size:14px;font-weight:600;color:var(--muted)}
+.seg button[aria-pressed=true]{background:var(--accent-soft);color:var(--accent)}
+.hero{margin:20px 0 8px}
+.hero .big{font-size:34px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.hero .sub{font-size:14px;color:var(--muted)}
+.chart{position:relative;background:var(--card);border:1px solid var(--line);border-radius:24px;padding:16px 12px 8px}
+.chart svg{display:block;width:100%;touch-action:pan-y;user-select:none}
+.chart text{fill:var(--muted);font-size:11px;font-variant-numeric:tabular-nums}
+.tip{position:absolute;top:8px;pointer-events:none;background:var(--text);color:var(--bg);border-radius:10px;padding:6px 10px;font-size:13px;white-space:nowrap;transform:translateX(-50%)}
+.tip b{display:block;font-size:15px;font-variant-numeric:tabular-nums}
+.empty{color:var(--muted);text-align:center;padding:40px 0}
+.list{background:var(--card);border:1px solid var(--line);border-radius:24px;padding:4px 18px}
+.row{display:flex;justify-content:space-between;align-items:baseline;padding:14px 0;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+.row:last-child{border-bottom:0}
+.row .d{color:var(--muted);font-size:14px}
+.row .v{font-weight:600;text-align:right}
+.row .c{font-size:12px;font-weight:500;color:var(--muted);display:block}
+.row[data-d]{cursor:pointer}
+.hint{color:var(--muted);font-size:13px;margin:-4px 0 12px}
+/* Tasa de un día elegido */
+.calc-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.calc-head h2{margin:0}
+.datepick{position:relative;display:flex;align-items:center;gap:6px;padding:7px 12px;border-radius:999px;background:var(--card);border:1px solid var(--line);font-size:14px;font-weight:600}
+.datepick svg{width:16px;height:16px;color:var(--muted)}
+.datepick.on{border-color:var(--accent);color:var(--accent)}
+.datepick.on svg{color:var(--accent)}
+.datepick input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+.datepick input:disabled{cursor:default}
+#picked{display:flex;justify-content:space-between;align-items:center;gap:12px;background:var(--accent-soft);border-radius:14px;padding:10px 14px;font-size:14px;margin-top:24px}
+#picked button{color:var(--accent);font-weight:600;white-space:nowrap}
+#picked:not([hidden]) + .rates{margin-top:12px}
+#update{display:flex;align-items:center;gap:10px;background:var(--accent);color:var(--on-accent);border-radius:16px;padding:12px 16px;margin-bottom:20px;text-decoration:none;font-size:14px}
+#update b{display:block;font-size:15px}
+#update svg{width:22px;height:22px;flex:none}
+#more{width:100%;padding:14px;margin-top:12px;border-radius:14px;border:1px solid var(--line);background:var(--card);font-weight:600;color:var(--muted)}
+</style>
+</head>
+<body>
+<a id="update" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0-4-4m4 4 4-4M5 21h14"/></svg><span><b id="update-title"></b><span id="update-notes"></span></span></a>
+<header>
+  <div><h1>Tasas BCV</h1><div id="date">Cargando…</div></div>
+  <div class="actions">
+    <button id="refresh" class="icon-btn" aria-label="Actualizar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></button>
+    <button id="menu-btn" class="icon-btn" aria-label="Menú" aria-haspopup="menu" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  </div>
+  <div id="menu" role="menu" hidden>
+    <button role="menuitemradio" data-view="calc" aria-checked="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 7h6M9 12h.01M12 12h.01M15 12h.01M9 16h.01M12 16h.01M15 16h.01"/></svg>Calculadora</button>
+    <button role="menuitemradio" data-view="chart" aria-checked="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 5-6"/></svg>Gráfico</button>
+    <button role="menuitemradio" data-view="hist" aria-checked="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Historial</button>
+    <div class="menu-sep"></div>
+    <button role="menuitemcheckbox" id="theme-switch" aria-checked="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>Modo oscuro<span class="switch"></span></button>
+  </div>
+</header>
+
+<main id="view-calc">
+  <div id="picked" hidden><span id="picked-text"></span><button id="today">Volver a hoy</button></div>
+  <section class="rates">
+    <div class="rate" role="button" tabindex="0" data-cur="USD" aria-pressed="true"><div class="code">USD · BCV</div><div class="val" id="v-USD">—</div><div class="unit">Bs por dólar <span id="chg-USD"></span></div></div>
+    <div class="rate" role="button" tabindex="0" data-cur="EUR" aria-pressed="false"><div class="code">EUR · BCV</div><div class="val" id="v-EUR">—</div><div class="unit">Bs por euro <span id="chg-EUR"></span></div></div>
+    <div class="rate" role="button" tabindex="0" data-cur="PAR" aria-pressed="false"><div class="code">PARALELO</div><div class="val" id="v-PAR">—</div><div class="unit" id="diff">Bs por dólar</div></div>
+    <div class="rate" role="button" tabindex="0" data-cur="OWN" aria-pressed="false"><div class="code">PROPIA</div><input class="val" id="own" inputmode="decimal" placeholder="0,00" autocomplete="off" aria-label="Tasa propia"><div class="unit">Bs por dólar</div></div>
+  </section>
+
+  <div class="calc-head">
+    <h2>Calculadora</h2>
+    <label class="datepick" id="datepick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span id="datepick-text">Hoy</span><input type="date" id="day" aria-label="Calcular con la tasa de otro día" disabled></label>
+  </div>
+  <div class="chips" id="chips"></div>
+  <div class="calc">
+    <div class="field"><label for="fx" id="fx-label">USD</label><input id="fx" inputmode="decimal" placeholder="0" autocomplete="off"></div>
+    <div class="sep"></div>
+    <div class="field"><label for="bs">Bs</label><input id="bs" inputmode="decimal" placeholder="0" autocomplete="off"></div>
+  </div>
+  <button id="copy" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span id="copy-text">Copiar</span></button>
+</main>
+
+<section id="view-hist-tools" hidden>
+  <div class="view-title" id="view-title">Gráfico</div>
+  <div class="seg" id="hcur">
+    <button data-c="USD" aria-pressed="true">USD BCV</button><button data-c="EUR" aria-pressed="false">EUR BCV</button><button data-c="PAR" aria-pressed="false">Paralelo</button>
+  </div>
+</section>
+
+<section id="view-chart" hidden>
+  <div class="seg" id="range">
+    <button data-d="7" aria-pressed="false">7D</button><button data-d="30" aria-pressed="true">1M</button><button data-d="90" aria-pressed="false">3M</button><button data-d="365" aria-pressed="false">1A</button><button data-d="0" aria-pressed="false">Todo</button>
+  </div>
+  <div class="hero"><div class="big" id="h-val">—</div><div class="sub" id="h-sub"></div></div>
+  <div class="chart" id="chart"></div>
+</section>
+
+<section id="view-hist" hidden>
+  <p class="hint">Toca un día para calcular con su tasa</p>
+  <div class="list" id="list"></div>
+  <button id="more" hidden>Ver más</button>
+</section>
+
+<p id="msg"></p>
+
+<script>
+const $ = id => document.getElementById(id);
+const API = 'https://ve.dolarapi.com/v1/';
+const fmt = new Intl.NumberFormat('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+const pctFmt = n => `${n >= 0 ? '+' : ''}${n.toLocaleString('es-VE', {minimumFractionDigits: 1, maximumFractionDigits: 1})}%`;
+const LABEL = {USD: 'USD', EUR: 'EUR', PAR: 'USD', OWN: 'USD'};
+const NAMES = {USD: 'Dólar BCV', EUR: 'Euro BCV', PAR: 'Dólar paralelo'};
+const HIST = {USD: 'dolares/oficial', EUR: 'euros/oficial', PAR: 'dolares/paralelo'};
+let rates = {}, rateDay = '', sel = 'USD', lastEdited = 'fx', live = null, pickDay = null;
+let hist = null, hcur = 'USD', range = 30, view = 'calc', shown = 60;
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch {} },
+};
+
+// Acepta "1.234,56" (formato VE) y "1234.56" (teclado en inglés)
+function parse(s) {
+  s = s.replace(/\s/g, '');
+  s = s.includes(',') ? s.replace(/\./g, '').replace(',', '.') : s;
+  const n = parseFloat(s);
+  return isFinite(n) ? n : null;
+}
+
+// Fechas "YYYY-MM-DD" a mediodía para que la zona horaria no cambie el día
+const day = d => new Date(d + 'T12:00:00');
+const dayFmt = (d, o = {weekday: 'short', day: 'numeric', month: 'short', year: 'numeric'}) => day(d).toLocaleDateString('es-VE', o);
+const addDays = (d, n) => { const x = day(d); x.setDate(x.getDate() + n); return x.toISOString().slice(0, 10); };
+
+/* ---------- Calculadora ---------- */
+const rate = () => sel === 'OWN' ? parse($('own').value) : rates[sel];
+const resultId = () => lastEdited === 'fx' ? 'bs' : 'fx';
+
+function recalc() {
+  const r = rate(), n = parse($(lastEdited).value), dst = $(resultId());
+  dst.value = r && n != null ? fmt.format(lastEdited === 'fx' ? n * r : n / r) : '';
+  $('copy').disabled = !dst.value;
+  $('copy-text').textContent = dst.value ? `Copiar ${dst.value} ${resultId() === 'bs' ? 'Bs' : LABEL[sel]}` : 'Copiar';
+}
+
+function render(data) {
+  live = {rates: data.rates, day: new Date(data.date).toLocaleDateString('en-CA', {timeZone: 'America/Caracas'})};
+  show();
+}
+
+// Tasa de un día del historial: la última publicada hasta ese día (fines de semana/feriados → último día hábil)
+const at = (c, d) => hist?.[c]?.filter(p => p[0] <= d).at(-1);
+
+// Muestra la tasa de hoy (live) o la del día elegido (pickDay) en tarjetas y calculadora
+function show() {
+  let cur = live;
+  if (pickDay && hist) {
+    const usd = at('USD', pickDay);
+    cur = {rates: {USD: usd?.[1], EUR: at('EUR', pickDay)?.[1], PAR: at('PAR', pickDay)?.[1]}, day: usd?.[0] || pickDay};
+  }
+  $('picked').hidden = !pickDay;
+  $('datepick').classList.toggle('on', !!pickDay);
+  $('datepick-text').textContent = pickDay ? dayFmt(pickDay, {day: 'numeric', month: 'short', year: '2-digit'}) : 'Hoy';
+  if (!cur) return;
+  rates = cur.rates;
+  rateDay = cur.day;
+  for (const c of ['USD', 'EUR', 'PAR']) $('v-' + c).textContent = rates[c] ? fmt.format(rates[c]) : '—';
+  $('diff').innerHTML = rates.PAR && rates.USD ? `<b>${pctFmt((rates.PAR / rates.USD - 1) * 100)}</b> vs BCV` : 'Bs por dólar';
+  ['USD', 'EUR'].forEach(c => $('chg-' + c).textContent = '');
+  $('date').textContent = (pickDay ? 'Tasa del ' : 'Vigente: ') + dayFmt(rateDay);
+  if (pickDay) $('picked-text').textContent = rateDay === pickDay
+    ? `Calculando con la tasa del ${dayFmt(pickDay)}`
+    : `Sin publicación el ${dayFmt(pickDay)} · usando la del ${dayFmt(rateDay)}`;
+  recalc();
+  dailyChange();
+}
+
+function pick(d) {
+  pickDay = d && d < todayStr() ? d : null; // hoy o vacío = tasa en vivo
+  $('day').value = pickDay || '';
+  show();
+}
+const todayStr = () => new Date().toLocaleDateString('en-CA');
+
+// "▲ 0,8%" en las tarjetas BCV: tasa vigente vs el día hábil anterior del historial
+function dailyChange() {
+  for (const c of ['USD', 'EUR']) {
+    const prev = hist?.[c]?.filter(p => p[0] < rateDay).at(-1);
+    if (!prev || !rates[c]) continue;
+    const p = (rates[c] / prev[1] - 1) * 100;
+    $('chg-' + c).innerHTML = `· <span class="${p >= 0 ? 'arrow-up' : 'arrow-down'}">${p >= 0 ? '▲' : '▼'}</span> ${pctFmt(Math.abs(p)).slice(1)}`;
+  }
+}
+
+async function load() {
+  $('refresh').classList.add('spin');
+  $('msg').textContent = '';
+  try {
+    const get = async p => (await fetch(API + p)).json();
+    const [usd, eur] = await Promise.all([get('dolares'), get('euros')]);
+    const pick = (list, f) => list.find(x => x.fuente === f);
+    const data = {
+      rates: {USD: pick(usd, 'oficial').promedio, EUR: pick(eur, 'oficial').promedio, PAR: pick(usd, 'paralelo')?.promedio},
+      date: pick(usd, 'oficial').fechaActualizacion,
+    };
+    store.set('tasas', JSON.stringify(data));
+    render(data);
+  } catch {
+    let cached = null;
+    try { cached = JSON.parse(store.get('tasas')); } catch {}
+    if (cached) { render(cached); $('msg').textContent = 'Sin conexión · mostrando última tasa guardada'; }
+    else { $('date').textContent = 'Sin conexión'; $('msg').textContent = 'No se pudieron cargar las tasas'; }
+  }
+  $('refresh').classList.remove('spin');
+}
+
+/* ---------- Historial (de la API, copia local; se descarga máx. 1 vez al día) ---------- */
+async function loadHist(force) {
+  const today = new Date().toLocaleDateString('en-CA');
+  let cached = null;
+  try { cached = JSON.parse(store.get('hist')); } catch {}
+  if (cached?.day === today && !force) hist = cached;
+  else {
+    try {
+      const entries = await Promise.all(Object.entries(HIST).map(async ([k, p]) => {
+        const list = await (await fetch(API + 'historicos/' + p)).json();
+        return [k, list.map(x => [x.fecha, x.promedio]).sort((a, b) => a[0] < b[0] ? -1 : 1)];
+      }));
+      hist = {day: today, ...Object.fromEntries(entries)};
+      store.set('hist', JSON.stringify(hist));
+    } catch { hist = cached; }
+  }
+  if (hist?.USD?.length) {
+    $('day').disabled = false;
+    $('day').min = hist.USD[0][0];
+    $('day').max = todayStr();
+  }
+  show();
+  drawView();
+}
+
+function drawView() {
+  if (view === 'chart') drawChart();
+  if (view === 'hist') drawList();
+}
+
+function drawChart() {
+  const box = $('chart'), all = hist?.[hcur] || [];
+  if (!all.length) { box.innerHTML = `<p class="empty">${hist ? 'Sin datos' : 'Cargando historial…'}</p>`; $('h-val').textContent = '—'; $('h-sub').textContent = ''; return; }
+  const last = all.at(-1)[0];
+  const pts = range ? all.filter(p => p[0] > addDays(last, -range)) : all;
+  const first = pts[0], end = pts.at(-1);
+  $('h-val').textContent = fmt.format(end[1]) + ' Bs';
+  $('h-sub').textContent = `${pctFmt((end[1] / first[1] - 1) * 100)} desde ${dayFmt(first[0], {day: 'numeric', month: 'short', year: 'numeric'})}`;
+
+  const W = box.clientWidth - 24, H = 220, L = 48, R = 8, T = 12, B = 24;
+  const vals = pts.map(p => p[1]);
+  let lo = Math.min(...vals), hi = Math.max(...vals);
+  const pad = (hi - lo) * 0.08 || hi * 0.01;
+  lo -= pad; hi += pad;
+  const n = pts.length;
+  const x = i => L + (n === 1 ? (W - L - R) / 2 : i / (n - 1) * (W - L - R));
+  const y = v => T + (hi - v) / (hi - lo) * (H - T - B);
+  const tick = v => v.toLocaleString('es-VE', {maximumFractionDigits: v < 100 ? 2 : 0});
+  const line = pts.map((p, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(p[1]).toFixed(1)}`).join('');
+  const grid = [0, .5, 1].map(f => {
+    const v = lo + (hi - lo) * f, yy = y(v).toFixed(1);
+    return `<line x1="${L}" x2="${W - R}" y1="${yy}" y2="${yy}" stroke="var(--line)"/><text x="${L - 8}" y="${yy}" text-anchor="end" dominant-baseline="middle">${tick(v)}</text>`;
+  }).join('');
+  const short = d => dayFmt(d, {day: 'numeric', month: 'short', ...(range === 0 || range === 365 ? {year: '2-digit'} : {})});
+  box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" height="${H}" role="img" aria-label="${NAMES[hcur]}: de ${fmt.format(first[1])} a ${fmt.format(end[1])} Bs">
+    ${grid}
+    <path d="${line}L${x(n - 1)},${H - B}L${x(0)},${H - B}Z" fill="var(--series)" opacity=".08"/>
+    <path d="${line}" fill="none" stroke="var(--series)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="${x(n - 1)}" cy="${y(end[1])}" r="4.5" fill="var(--series)" stroke="var(--card)" stroke-width="2"/>
+    <text x="${L}" y="${H - 6}">${short(first[0])}</text><text x="${W - R}" y="${H - 6}" text-anchor="end">${short(end[0])}</text>
+    <g id="cross" visibility="hidden"><line id="cx" y1="${T}" y2="${H - B}" stroke="var(--muted)" stroke-dasharray="3 3"/><circle id="cd" r="5" fill="var(--series)" stroke="var(--card)" stroke-width="2"/></g>
+  </svg><div class="tip" id="tip" hidden></div>`;
+
+  // Tocar/arrastrar sobre el gráfico muestra el valor de ese día
+  const svg = box.querySelector('svg'), tip = $('tip');
+  const show = e => {
+    const r = svg.getBoundingClientRect();
+    const px = (e.clientX - r.left) * W / r.width;
+    const i = Math.max(0, Math.min(n - 1, Math.round((px - L) / (W - L - R) * (n - 1))));
+    const cx = x(i), cy = y(pts[i][1]);
+    $('cx').setAttribute('x1', cx); $('cx').setAttribute('x2', cx);
+    $('cd').setAttribute('cx', cx); $('cd').setAttribute('cy', cy);
+    $('cross').setAttribute('visibility', 'visible');
+    tip.hidden = false;
+    tip.innerHTML = `${dayFmt(pts[i][0])}<b>${fmt.format(pts[i][1])} Bs</b>`;
+    const half = tip.offsetWidth / 2 + 4, left = 12 + cx * r.width / W;
+    tip.style.left = Math.max(half, Math.min(box.clientWidth - half, left)) + 'px';
+  };
+  svg.onpointerdown = svg.onpointermove = show;
+  svg.onpointerleave = () => { $('cross').setAttribute('visibility', 'hidden'); tip.hidden = true; };
+}
+
+function drawList() {
+  const all = hist?.[hcur] || [];
+  if (!all.length) { $('list').innerHTML = `<p class="empty">${hist ? 'Sin datos' : 'Cargando historial…'}</p>`; $('more').hidden = true; return; }
+  const rows = [];
+  for (let i = all.length - 1; i >= Math.max(0, all.length - shown); i--) {
+    const [d, v] = all[i], prev = all[i - 1];
+    const p = prev ? (v / prev[1] - 1) * 100 : null;
+    const chg = p == null ? '' : `<span class="c"><span class="${p >= 0 ? 'arrow-up' : 'arrow-down'}">${p >= 0 ? '▲' : '▼'}</span> ${pctFmt(Math.abs(p)).slice(1)}</span>`;
+    rows.push(`<div class="row" data-d="${d}"><span class="d">${dayFmt(d)}</span><span class="v">${fmt.format(v)}${chg}</span></div>`);
+  }
+  $('list').innerHTML = rows.join('');
+  $('more').hidden = shown >= all.length;
+}
+
+/* ---------- Menú y vistas ---------- */
+function setView(v, push = true) {
+  view = v;
+  $('view-calc').hidden = v !== 'calc';
+  $('view-hist-tools').hidden = v === 'calc';
+  $('view-chart').hidden = v !== 'chart';
+  $('view-hist').hidden = v !== 'hist';
+  $('view-title').textContent = v === 'chart' ? 'Gráfico' : 'Historial';
+  document.querySelectorAll('#menu button[data-view]').forEach(b => b.setAttribute('aria-checked', b.dataset.view === v));
+  // El botón "atrás" de Android vuelve a la calculadora
+  if (push && v !== 'calc') history.pushState({v}, '');
+  drawView();
+  scrollTo(0, 0);
+}
+addEventListener('popstate', e => setView(e.state?.v || 'calc', false));
+
+function toggleMenu(open) {
+  $('menu').hidden = !open;
+  $('menu-btn').setAttribute('aria-expanded', open);
+}
+$('menu-btn').onclick = e => { e.stopPropagation(); toggleMenu($('menu').hidden); };
+$('menu').onclick = e => {
+  const b = e.target.closest('button');
+  if (!b) return;
+  if (b.id === 'theme-switch') return toggleTheme(); // el menú queda abierto para ver el cambio
+  toggleMenu(false);
+  const v = b.dataset.view;
+  if (v === view) return;
+  if (v === 'calc') history.back();                                   // popstate vuelve a la calculadora
+  else if (view === 'calc') setView(v);                               // calc → vista: apila una entrada
+  else { history.replaceState({v}, ''); setView(v, false); }          // vista → vista: sin apilar
+};
+document.addEventListener('click', e => { if (!$('menu').hidden && !$('menu').contains(e.target)) toggleMenu(false); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') toggleMenu(false); });
+
+const segment = (id, key, fn) => $(id).onclick = e => {
+  const b = e.target.closest('button');
+  if (!b) return;
+  $(id).querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b));
+  fn(b.dataset[key]);
+  drawView();
+};
+segment('hcur', 'c', c => { hcur = c; shown = 60; });
+segment('range', 'd', d => { range = +d; });
+$('more').onclick = () => { shown += 120; drawList(); };
+
+// Tocar un día del historial → calculadora con esa tasa (y esa moneda)
+$('list').onclick = e => {
+  const row = e.target.closest('.row[data-d]');
+  if (!row) return;
+  pick(row.dataset.d);
+  select(document.querySelector(`.rate[data-cur="${hcur}"]`));
+  history.back();
+};
+$('day').onchange = () => pick($('day').value);
+$('day').onclick = () => { try { $('day').showPicker(); } catch {} };
+$('today').onclick = () => pick(null);
+addEventListener('resize', () => view === 'chart' && drawChart());
+
+/* ---------- Calculadora: eventos ---------- */
+function select(card) {
+  sel = card.dataset.cur;
+  document.querySelectorAll('.rate').forEach(x => x.setAttribute('aria-pressed', x === card));
+  $('fx-label').textContent = LABEL[sel];
+  recalc();
+}
+document.querySelectorAll('.rate').forEach(card => {
+  card.onclick = () => select(card);
+  card.onkeydown = e => { if ((e.key === 'Enter' || e.key === ' ') && e.target === card) { e.preventDefault(); select(card); } };
+});
+
+$('own').value = store.get('propia') || '';
+$('own').oninput = () => { store.set('propia', $('own').value); recalc(); };
+
+$('chips').innerHTML = [1, 5, 10, 20, 50, 100].map(n => `<button data-n="${n}">${n}</button>`).join('');
+$('chips').onclick = e => {
+  const n = e.target.dataset.n;
+  if (!n) return;
+  $('fx').value = n;
+  lastEdited = 'fx';
+  recalc();
+};
+
+['fx', 'bs'].forEach(id => $(id).oninput = () => { lastEdited = id; recalc(); });
+
+$('copy').onclick = async () => {
+  const text = $(resultId()).value;
+  try {
+    if (window.Android) Android.copy(text); // puente nativo (MainActivity)
+    else await navigator.clipboard.writeText(text);
+    $('copy-text').textContent = 'Copiado ✓';
+  } catch { $('copy-text').textContent = 'No se pudo copiar'; }
+  setTimeout(recalc, 1500);
+};
+
+/* ---------- Tema claro/oscuro ---------- */
+// Sin elección guardada sigue al sistema; al tocar el interruptor se guarda 'light' o 'dark'
+const darkMq = matchMedia('(prefers-color-scheme: dark)');
+const root = document.documentElement;
+const isDark = () => root.dataset.theme ? root.dataset.theme === 'dark' : darkMq.matches;
+function applyTheme() {
+  $('theme-switch').setAttribute('aria-checked', isDark());
+  window.Android?.theme(isDark()); // barra de estado de Android a juego
+}
+function toggleTheme() {
+  root.dataset.theme = isDark() ? 'light' : 'dark';
+  store.set('theme', root.dataset.theme);
+  applyTheme();
+}
+darkMq.onchange = applyTheme;
+applyTheme();
+
+/* ---------- Aviso de APK nuevo (version.json en GitHub Pages) ---------- */
+// Solo dentro del APK. Al tocarlo, el enlace se abre en el navegador y descarga el APK.
+async function checkUpdate() {
+  if (!window.Android?.versionCode) return;
+  try {
+    const v = await (await fetch(Android.otaBase() + 'version.json?t=' + Date.now())).json();
+    if (v.versionCode > Android.versionCode()) {
+      $('update').href = v.apk;
+      $('update-title').textContent = 'Nueva versión ' + v.versionName + ' disponible · Descargar';
+      $('update-notes').textContent = v.notes || '';
+      $('update').hidden = false;
+    }
+  } catch {}
+}
+checkUpdate();
+
+$('refresh').onclick = () => { load(); loadHist(true); };
+load();
+loadHist(false);
+</script>
+</body>
+</html>
