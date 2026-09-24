@@ -8,7 +8,16 @@ Set-Location $PSScriptRoot
 $gh = "C:\Program Files\GitHub CLI\gh.exe"
 $gradle = "app\build.gradle.kts"
 
-Copy-Item app\src\main\assets\index.html docs\index.html -Force
+# Sube UI_VERSION y pone -Notas como texto del aviso "App actualizada"
+$ui = "app\src\main\assets\index.html"
+$html = [IO.File]::ReadAllText("$PWD\$ui")
+$uiVer = [int]([regex]::Match($html, 'const UI_VERSION = (\d+);').Groups[1].Value) + 1
+$notasJs = ($Notas -replace '\\', '\\' -replace "'", "\'")
+$html = $html -replace 'const UI_VERSION = \d+;', "const UI_VERSION = $uiVer;" -replace "const UI_NOTES = '(?:[^'\\]|\\.)*';", "const UI_NOTES = '$notasJs';"
+[IO.File]::WriteAllText("$PWD\$ui", $html)
+Write-Host "Interfaz $uiVer"
+
+Copy-Item $ui docs\index.html -Force
 
 if ($Apk) {
     if (-not $Version) { throw "Indica la versión: -Version 2.1" }

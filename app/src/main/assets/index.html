@@ -28,6 +28,10 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 #menu button svg{width:20px;height:20px;color:var(--muted)}
 #menu button[data-view][aria-checked=true]{color:var(--accent)}
 #menu button[data-view][aria-checked=true] svg{color:var(--accent)}
+#toast{position:fixed;left:16px;right:16px;bottom:24px;width:fit-content;margin:0 auto;z-index:20;display:flex;align-items:center;gap:10px;max-width:420px;background:var(--text);color:var(--bg);border-radius:14px;padding:12px 16px;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.25);transform:translateY(150%);opacity:0;transition:transform .3s ease,opacity .3s ease;cursor:pointer}
+#toast.show{transform:none;opacity:1}
+#toast svg{width:20px;height:20px;flex:none;color:var(--accent)}
+#toast b{display:block}
 .menu-foot{color:var(--muted);font-size:12px;padding:8px 14px 6px;font-variant-numeric:tabular-nums}
 .menu-sep{height:1px;background:var(--line);margin:6px 8px}
 .switch{margin-left:auto;flex:none;width:36px;height:20px;border-radius:999px;background:var(--line);position:relative;transition:background .2s}
@@ -163,11 +167,13 @@ h2{font-size:13px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-t
 </section>
 
 <p id="msg"></p>
+<div id="toast" role="status" aria-live="polite"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span><b id="toast-title"></b><span id="toast-notes"></span></span></div>
 
 <script>
 const $ = id => document.getElementById(id);
 // Súbelo en cada publicación OTA: así se ve en el menú qué interfaz tiene cada teléfono
-const UI_VERSION = 2;
+const UI_VERSION = 3;
+const UI_NOTES = 'Ahora te avisamos cuando la app se actualiza';
 const API = 'https://ve.dolarapi.com/v1/';
 const fmt = new Intl.NumberFormat('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 const pctFmt = n => `${n >= 0 ? '+' : ''}${n.toLocaleString('es-VE', {minimumFractionDigits: 1, maximumFractionDigits: 1})}%`;
@@ -499,6 +505,20 @@ async function checkUpdate() {
   } catch {}
 }
 checkUpdate();
+/* ---------- Aviso discreto de 'App actualizada' (una vez por versión; no en la primera instalación) ---------- */
+function showUpdated() {
+  // Las interfaces ≤2 no guardaban su versión: si ya hay tasas guardadas, la app se usó antes
+  const seen = +store.get('uiVersion') || (store.get('tasas') ? 2 : 0);
+  store.set('uiVersion', UI_VERSION);
+  if (!seen || seen >= UI_VERSION) return;
+  $('toast-title').textContent = 'App actualizada';
+  $('toast-notes').textContent = UI_NOTES;
+  const t = $('toast'), hide = () => t.classList.remove('show');
+  setTimeout(() => t.classList.add('show'), 600);
+  setTimeout(hide, 5600);
+  t.onclick = hide;
+}
+showUpdated();
 $('ver').textContent = 'Interfaz ' + UI_VERSION + (window.Android?.versionCode ? ' · compilación ' + Android.versionCode() : '');
 
 $('refresh').onclick = () => { load(); loadHist(true); };
